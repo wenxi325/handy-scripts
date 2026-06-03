@@ -1,5 +1,5 @@
 ; Typeless → Citrix 输入脚本（AutoHotkey v2）
-; 用法：Typeless 语音输入完成后 Ctrl+C 复制，点进 Citrix 窗口，按 F2
+; 用法：在 Citrix 窗口里点一下，按 F2，剪贴板内容就会被打进去
 
 #SingleInstance Force
 
@@ -10,12 +10,14 @@ F2:: {
         return
     }
 
-    ; 写入临时 UTF-8 文件，交给 PowerShell 发送
-    tmpFile := A_Temp . "\ahk_typeless_tmp.txt"
-    FileDelete(tmpFile)
-    FileAppend(text, tmpFile, "UTF-8")
-
-    ; 调用同目录下的 send_text.ps1
-    psScript := A_ScriptDir . "\send_text.ps1"
-    Run('powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File "' . psScript . '" "' . tmpFile . '"')
+    for char in StrSplit(text) {
+        if (char = "`n") {
+            Send("{Enter}")
+        } else if (char = "`t") {
+            Send("{Tab}")
+        } else {
+            Send("{U+" Format("{:04X}", Ord(char)) "}")
+        }
+        Sleep(10)
+    }
 }
